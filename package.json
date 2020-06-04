@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/index.js",
   "bin": {
-    "noxt": "bin/index.js"
+    "quickr": "bin/index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,7 +12,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@koa/router": "^9.0.1",
+    "chokidar": "^3.4.0",
     "esm": "^3.2.25",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "koa": "^2.12.0",
+    "shortid": "^2.2.15",
+    "watchr": "^6.1.0"
   }
 }

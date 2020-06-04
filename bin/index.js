@@ -1,11 +1,9 @@
 #!/usr/bin/env node
-const Noxt = require('../')
-const { resolve } = require('path')
+const Quickr = require('../')
 
-const noxt = new Noxt(process.cwd())
+const quickr = new Quickr(process.cwd())
 
 async function main() {
-    await noxt.start()
+    await quickr.startServer()
 }
-
 main()
