@@ -17,8 +17,14 @@ class Quickr {
 
     async startServer() {
         this.server = new QuickrServer(this.root, {})
+        await this.server.init()
         await this.server.setRoutes(this.apiRoot)
         await this.server.start(3000)
+    }
+
+    async stopServer() {
+        if (!this.server) return
+        await this.server.close()
     }
 
     // async startDevServer() {

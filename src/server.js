@@ -1,34 +1,80 @@
 const Koa = require('koa')
 const Router = require('@koa/router');
 const { resolve, join, relative } = require('path')
-const fs = require('fs').promises
+const fs = require('fs-extra')
 const Logger = require('./logger')
 const shortid = require('shortid')
+const { requireModule } = require('./utils')
 
 class QuickrServer {
     constructor(root, options = {}) {
         const {
             apiRoot = 'api',
             staticRoot = 'static',
-            middlewareRoot = 'middleware'
+            middlewareRoot = 'middleware',
+            loggerRoot = 'logger'
         } = options
         this.root = root
         this.apiRoot = resolve(this.root, apiRoot)
         this.middlewareRoot = resolve(this.root, middlewareRoot)
+        this.loggerRoot = resolve(this.root, loggerRoot)
         this.app = new Koa()
         this.router = new Router();
+    }
+
+    async init() {
+        this.loggerHandlers = await this.getLoggerHandlers()
+        this.globalMiddlewareHandlers = await this.getGlobalMiddlewareHandlers()
+    }
+
+    async getLoggerHandlers() {
+        if (await fs.exists(this.loggerRoot)) {
+            const defaultHandlerPath = resolve(this.loggerRoot, 'index.js')
+            const debugHandlerPath = resolve(this.loggerRoot, 'debug.js')
+            const infoHandlerPath = resolve(this.loggerRoot, 'info.js')
+            const warnHandlerPath = resolve(this.loggerRoot, 'warn.js')
+            const errorHandlerPath = resolve(this.loggerRoot, 'error.js')
+            let defaultHandler, debugHandler, infoHandler, warnHandler, errorHandler
+            if (await fs.exists(defaultHandlerPath)) {
+                defaultHandler = requireModule(defaultHandlerPath)
+            }
+            if (await fs.exists(debugHandlerPath)) {
+                debugHandler = requireModule(debugHandlerPath)
+            }
+            if (await fs.exists(infoHandlerPath)) {
+                infoHandler = requireModule(infoHandlerPath)
+            }
+            if (await fs.exists(warnHandlerPath)) {
+                warnHandler = requireModule(warnHandlerPath)
+            }
+            if (await fs.exists(errorHandlerPath)) {
+                errorHandler = requireModule(errorHandlerPath)
+            }
+            return {
+                [Logger.LOG_TYPE.DEBUG]: defaultHandler || debugHandler,
+                [Logger.LOG_TYPE.INFO]: defaultHandler || infoHandler,
+                [Logger.LOG_TYPE.WARN]: defaultHandler || warnHandler,
+                [Logger.LOG_TYPE.ERROR]: defaultHandler || errorHandler
+            }
+        } else {
+            return {}
+        }
     }
 
     customMiddleware() {
         return (ctx, next) => {
             ctx.request.params = ctx.params
             ctx.requestId = shortid.generate()
-            ctx.logger = new Logger(ctx)
+            ctx.logger = new Logger(this.loggerHandlers)
+            ctx.logger.setContext(ctx)
             next()
         }
     }
 
     async getGlobalMiddlewareHandlers() {
+        if (!await fs.exists(this.middlewareRoot)) {
+            return []
+        }
         const files = await fs.readdir(this.middlewareRoot, { withFileTypes: true })
         const globalMiddlewares = []
         for (const file of files) {
@@ -77,7 +123,6 @@ class QuickrServer {
     }
 
     async setRoutes(dir, basePath = '/') {
-        this.globalMiddlewareHandlers = await this.getGlobalMiddlewareHandlers()
         const files = await fs.readdir(dir, { withFileTypes: true })
         for (const file of files) {
             const fileName = file.name
@@ -139,5 +184,4 @@ class QuickrServer {
         return handlers
     }
 }
-
 module.exports = QuickrServer

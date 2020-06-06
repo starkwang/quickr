@@ -1,9 +1,18 @@
 #!/usr/bin/env node
+const { resolve } = require('path')
+const { Command } = require('commander');
 const Quickr = require('../')
 
-const quickr = new Quickr(process.cwd())
+const program = new Command();
+program.version(require('../package.json').version);
 
-async function main() {
-    await quickr.startServer()
-}
-main()
+program
+    .command('start [root]')
+    .description('Starting Quickr Server')
+    .action(async (root) => {
+        root = root || '.'
+        const q = new Quickr(resolve(process.cwd(), root))
+        await q.startServer()
+    })
+
+program.parse(process.argv);
