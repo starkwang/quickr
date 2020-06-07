@@ -1,41 +1,30 @@
-# Quickr
+# Qucikr
 
-## 路由
+A Node.js framework for future🚀
 
-- 基于文件系统的路由
+## Install
 
-## 中间件（待定）
+```js
+$ npm i -g quickr
+```
 
-- 顺序？
-- 全局？局部？
+## Quick Start
 
-## Model/Service层（待定）
+```sh
+$ mkdir quickr-demo
+$ cd quickr-demo
+$ mkdir api
+$ touch api/index.js
+```
 
-## 日志
 
-- 输出到标准输出
-- 上下文
-- 分级
+```js
+// api/index.js
+export default function() {
+    return 'Hello World'
+}
+```
 
-## 错误处理
-
-- error/index.js
-
-## 定时任务
-
-- schedule/*.js
-
-## 应用生命周期 Hooks
-
-- lifetime/beforeCreate.js
-- lifetime/*.js
-
-## Plugin
-
-组合的形式，类似一组 pre set
-
-## 开发
-
-- Hot Reload
-
-## 测试
+```sh
+$ quickr start
+```

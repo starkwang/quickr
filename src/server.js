@@ -25,6 +25,11 @@ class QuickrServer {
     async init() {
         this.loggerHandlers = await this.getLoggerHandlers()
         this.globalMiddlewareHandlers = await this.getGlobalMiddlewareHandlers()
+        this.errorHandlers = await this.getErrorHandlers()
+    }
+
+    async getErrorHandlers() {
+        
     }
 
     async getLoggerHandlers() {
