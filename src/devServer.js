@@ -1,8 +1,6 @@
 const Quickr = require('../')
 
 process.on('message', async ({ action, params }) => {
-    console.log('receive message:', action, params)
-
     switch (action) {
         case 'start': {
             start(params.root)
