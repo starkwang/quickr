@@ -1,11 +1,22 @@
-const chokidar = require('chokidar');
+const { resolve } = require('path')
+const chokidar = require('chokidar')
 const fs = require('fs-extra')
 const md5 = require('md5')
+
+const QUICKR_FILES = [
+    'api',
+    'logger',
+    'middleware',
+    'error',
+    'package.json'
+]
 
 class Watcher {
     constructor(dir) {
         this.watchDir = dir
-        this.watcher = chokidar.watch(this.watchDir, {
+        
+        const watchedFiles = QUICKR_FILES.map((p) => resolve(this.watchDir, p))
+        this.watcher = chokidar.watch(watchedFiles, {
             ignoreInitial: true
         })
 
