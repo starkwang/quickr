@@ -1,5 +1,3 @@
-
-
 class Context {
     constructor(method, path) {
         this.method = method

@@ -8,9 +8,6 @@ process.on('message', async ({ action, params }) => {
             start(params.root)
         }
     }
-    // root = resolve(process.cwd(), root || '.')
-    // const q = new Quickr(root)
-    // await q.startServer()
 })
 
 async function start(root) {

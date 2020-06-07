@@ -26,21 +26,6 @@ class Quickr {
         if (!this.server) return
         await this.server.close()
     }
-
-    // async startDevServer() {
-    //     const onChange = async (event, path, details) => {
-    //         console.log('Detect change on: ', path)
-    //         await this.server.close()
-    //         await this.startServer()
-    //     }
-    //     chokidar
-    //         .watch(this.apiRoot, {
-    //             ignoreInitial: true,
-    //             alwaysStat: true
-    //         })
-    //         .on('all', onChange)
-    //     await this.startServer()
-    // }
 }
 
 module.exports = Quickr
