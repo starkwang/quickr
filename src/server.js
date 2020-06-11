@@ -29,7 +29,7 @@ class QuickrServer {
     }
 
     async getErrorHandlers() {
-        
+
     }
 
     async getLoggerHandlers() {
@@ -42,6 +42,8 @@ class QuickrServer {
             let defaultHandler, debugHandler, infoHandler, warnHandler, errorHandler
             if (await fs.exists(defaultHandlerPath)) {
                 defaultHandler = requireModule(defaultHandlerPath)
+            } else {
+                throw new Error('Default log handler must be exist. Please add logger/index.js.')
             }
             if (await fs.exists(debugHandlerPath)) {
                 debugHandler = requireModule(debugHandlerPath)
@@ -57,9 +59,9 @@ class QuickrServer {
             }
             return {
                 [Logger.LOG_TYPE.DEBUG]: defaultHandler || debugHandler,
-                [Logger.LOG_TYPE.INFO]: defaultHandler || infoHandler,
-                [Logger.LOG_TYPE.WARN]: defaultHandler || warnHandler,
-                [Logger.LOG_TYPE.ERROR]: defaultHandler || errorHandler
+                [Logger.LOG_TYPE.INFO]: infoHandler || defaultHandler,
+                [Logger.LOG_TYPE.WARN]: warnHandler || defaultHandler,
+                [Logger.LOG_TYPE.ERROR]: errorHandler || defaultHandler
             }
         } else {
             return {}
@@ -67,12 +69,12 @@ class QuickrServer {
     }
 
     customMiddleware() {
-        return (ctx, next) => {
+        return async (ctx, next) => {
             ctx.request.params = ctx.params
             ctx.requestId = shortid.generate()
             ctx.logger = new Logger(this.loggerHandlers)
             ctx.logger.setContext(ctx)
-            next()
+            await next()
         }
     }
 
@@ -160,23 +162,33 @@ class QuickrServer {
         route = this.trasformRoute(route)
         console.log(`Set route "${route}" => ${relative(this.root, entryFile)}`)
         const entry = require(entryFile)
-        const handler = entry.default || entry
-        const { method = 'get' } = entry
-        this.router[method](
-            route,
-            this.customMiddleware(),
-            ...this.globalMiddlewareHandlers,
-            async (ctx) => {
-                try {
-                    const body = await handler.call(ctx, ctx.request, ctx.response)
-                    ctx.body = body
-                } catch (e) {
-                    // todo: 错误处理
-                    console.log(e)
-                    throw e
-                }
+
+        const defaultHandler = entry.default || entry
+
+        const methods = ['get', 'post', 'put', 'delete', 'options']
+
+        methods.forEach(method => {
+            const handler = entry[method] || defaultHandler
+            if (!handler) {
+                return
             }
-        )
+            this.router[method](
+                route,
+                this.customMiddleware(),
+                ...this.globalMiddlewareHandlers,
+                async (ctx) => {
+                    try {
+                        const body = await handler.call(ctx, ctx.request, ctx.response)
+                        ctx.body = body
+                    } catch (e) {
+                        // todo: 错误处理
+                        console.log(e)
+                        throw e
+                    }
+                }
+            )
+        })
+
     }
 
     resolveMiddlewareHandlers(middlewares = []) {

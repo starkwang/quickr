@@ -16,11 +16,12 @@ class Logger {
 
     write(type = 'INFO', ...args) {
         const { method, path, requestId } = this.context
+        const date = new Date()
         if (this.handlers[type]) {
             const meta = {
                 // todo: more meta
                 requestId,
-                timestamp: new Date(),
+                time: new Date(),
                 method,
                 path,
                 type,
@@ -29,8 +30,18 @@ class Logger {
             this.handlers[type].call(this.context, meta)
             return
         } else {
-            console.log(`[${type}] [${method}] ${path} [${requestId}]`, ...args)
+            console.log(`${this.formatDate(date)} [${type}] [${method} ${path}]  [${requestId}]`, ...args)
         }
+    }
+
+    formatDate(date) {
+        const year = date.getFullYear()
+        const month = date.getMonth() + 1
+        const day = date.getDate()
+        const hours = date.getHours()
+        const minutes = date.getMinutes()
+        const seconds = date.getSeconds()
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
     }
 
     log(...args) {

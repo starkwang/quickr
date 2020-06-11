@@ -12,8 +12,16 @@ describe('base', () => {
     after(async () => {
         await q.stopServer()
     })
-    it('/', async () => {
+    it('get /', async () => {
         const response = await got('http://localhost:3000');
+        expect(response.body).to.equal('hello world')
+    })
+    it('post /', async () => {
+        const response = await got.post('http://localhost:3000');
+        expect(response.body).to.equal('post')
+    })
+    it('put /', async () => {
+        const response = await got.put('http://localhost:3000');
         expect(response.body).to.equal('hello world')
     })
     it('/foo', async () => {

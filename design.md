@@ -11,6 +11,14 @@
 
 ## Model/Service层（待定）
 
+## HTTP Server 通用能力
+
+- cookie、session
+- 文件上传
+- 静态文件服务器
+- 模板渲染
+- 跨域
+
 ## 日志
 
 - 输出到标准输出
