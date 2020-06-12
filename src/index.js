@@ -1,31 +1,27 @@
-require = require("esm")(module)
+require = require('esm')(module)
 const { resolve, join, relative } = require('path')
 const QuickrServer = require('./server')
 
 class Quickr {
-    constructor(root, options = {}) {
-        const {
-            apiRoot = 'api',
-            staticRoot = 'static',
-            middlewareRoot = 'middleware'
-        } = options
-        this.root = root
-        this.apiRoot = resolve(this.root, apiRoot)
-        this.middlewareRoot = resolve(this.root, middlewareRoot)
-        this.server = null
-    }
+  constructor(root, options = {}) {
+    const { apiRoot = 'api', staticRoot = 'static', middlewareRoot = 'middleware' } = options
+    this.root = root
+    this.apiRoot = resolve(this.root, apiRoot)
+    this.middlewareRoot = resolve(this.root, middlewareRoot)
+    this.server = null
+  }
 
-    async startServer() {
-        this.server = new QuickrServer(this.root, {})
-        await this.server.init()
-        await this.server.setRoutes(this.apiRoot)
-        await this.server.start(3000)
-    }
+  async startServer() {
+    this.server = new QuickrServer(this.root, {})
+    await this.server.init()
+    await this.server.setRoutes(this.apiRoot)
+    await this.server.start(3000)
+  }
 
-    async stopServer() {
-        if (!this.server) return
-        await this.server.close()
-    }
+  async stopServer() {
+    if (!this.server) return
+    await this.server.close()
+  }
 }
 
 module.exports = Quickr
