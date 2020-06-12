@@ -7,7 +7,8 @@
     "quickr": "bin/index.js"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "format": "prettier --write src/*.js"
   },
   "author": "",
   "license": "ISC",
@@ -25,6 +26,14 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "got": "^11.2.0",
-    "mocha": "^7.2.0"
+    "husky": "^4.2.5",
+    "mocha": "^7.2.0",
+    "prettier": "2.0.5",
+    "pretty-quick": "^2.0.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
   }
 }
