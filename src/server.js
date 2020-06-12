@@ -8,12 +8,7 @@ const { requireModule } = require('./utils')
 
 class QuickrServer {
   constructor(root, options = {}) {
-    const {
-      apiRoot = 'api',
-      staticRoot = 'static',
-      middlewareRoot = 'middleware',
-      loggerRoot = 'logger'
-    } = options
+    const { apiRoot = 'api', middlewareRoot = 'middleware', loggerRoot = 'logger' } = options
     this.root = root
     this.apiRoot = resolve(this.root, apiRoot)
     this.middlewareRoot = resolve(this.root, middlewareRoot)
@@ -145,7 +140,7 @@ class QuickrServer {
     }
   }
 
-  trasformRoute(route) {
+  transformRoute(route) {
     const result = route.match(/\[(.*?)\]/g)
     if (result) {
       for (const matched of result) {
@@ -157,7 +152,7 @@ class QuickrServer {
 
   async setRoute(route, entryFile) {
     require.cache = {}
-    route = this.trasformRoute(route)
+    route = this.transformRoute(route)
     console.log(`Set route "${route}" => ${relative(this.root, entryFile)}`)
     const entry = require(entryFile)
 
