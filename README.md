@@ -1,4 +1,4 @@
-# Qucikr
+# Quickr
 
 A Node.js framework for future🚀
 
