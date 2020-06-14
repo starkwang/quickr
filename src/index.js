@@ -1,10 +1,11 @@
+// eslint-disable-next-line no-global-assign
 require = require('esm')(module)
-const { resolve, join, relative } = require('path')
+const { resolve } = require('path')
 const QuickrServer = require('./server')
 
 class Quickr {
   constructor(root, options = {}) {
-    const { apiRoot = 'api', staticRoot = 'static', middlewareRoot = 'middleware' } = options
+    const { apiRoot = 'api', middlewareRoot = 'middleware' } = options
     this.root = root
     this.apiRoot = resolve(this.root, apiRoot)
     this.middlewareRoot = resolve(this.root, middlewareRoot)

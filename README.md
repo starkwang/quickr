@@ -31,8 +31,8 @@ $ touch api/index.js
 
 ```js
 // api/index.js
-export default function() {
-    return 'Hello World'
+export default function () {
+  return 'Hello World'
 }
 ```
 
@@ -57,14 +57,15 @@ $ quickr dev
 ### Routing 路由
 
 #### 路由规则
+
 Quickr 使用了**基于文件系统的路由**，在 `api` 目录下的文件，会被自动设置为路由的「终点」。例如：
 
-| 路由 | 文件路径 |
-| ---- | -------- |
-| `/` | `api/index.js` |
-| `/foo` | `api/foo.js` |
+| 路由         | 文件路径            |
+| ------------ | ------------------- |
+| `/`          | `api/index.js`      |
+| `/foo`       | `api/foo.js`        |
 | `/user/:uid` | `api/user/[uid].js` |
-| `/:id/get` | `api/[id]/get.js` |
+| `/:id/get`   | `api/[id]/get.js`   |
 
 #### 路由处理函数
 
@@ -75,25 +76,25 @@ Quickr 使用了**基于文件系统的路由**，在 `api` 目录下的文件�
 
 ```js
 // 所有的 HTTP 方法，都会返回 "hello world"
-export default async function(req, res) {
-    return 'hello world'
+export default async function (req, res) {
+  return 'hello world'
 }
 ```
 
 ```js
 // GET 方法，会返回 "This is a get method"
 export function get() {
-    return 'This is a get method'
+  return 'This is a get method'
 }
 
 // POST 方法，会返回 "This is a post method"
 export function post() {
-    return 'This is a post method'
+  return 'This is a post method'
 }
 
 // 除去 GET 和 POST 以外，都会返回 "hello world"
-export default async function(req, res) {
-    return 'hello world'
+export default async function (req, res) {
+  return 'hello world'
 }
 ```
 
@@ -101,20 +102,20 @@ export default async function(req, res) {
 
 ```js
 // text/plain
-export default async function(req, res) {
-    return 'hello world'
+export default async function (req, res) {
+  return 'hello world'
 }
 
 // text/html
-export default async function(req, res) {
-    return '<h1>hey!</h1>'
+export default async function (req, res) {
+  return '<h1>hey!</h1>'
 }
 
 // application/json
-export default async function(req, res) {
-    return {
-        foo: 'bar'
-    }
+export default async function (req, res) {
+  return {
+    foo: 'bar'
+  }
 }
 ```
 
@@ -126,9 +127,9 @@ export default async function(req, res) {
 
 ```js
 // api/index.js
-export default async function(req, res) {
-    this.logger.log('loglog')
-    return 'hello world'
+export default async function (req, res) {
+  this.logger.log('loglog')
+  return 'hello world'
 }
 ```
 
@@ -166,16 +167,16 @@ this.logger.error('this is error log')
 
 ```js
 // logger/index.js
-export default function(meta) {
-    const {
-        requestId, // 请求 ID
-        time,      // 日志时间
-        method,    // HTTP 请求方法
-        path,      // HTTP 请求路径
-        type,      // 日志级别
-        payload    // 日志内容，以数组形式
-    } = meta
-    console.log(`${time} ${payload.join(' ')}`)
+export default function (meta) {
+  const {
+    requestId, // 请求 ID
+    time, // 日志时间
+    method, // HTTP 请求方法
+    path, // HTTP 请求路径
+    type, // 日志级别
+    payload // 日志内容，以数组形式
+  } = meta
+  console.log(`${time} ${payload.join(' ')}`)
 }
 ```
 
