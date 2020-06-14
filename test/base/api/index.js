@@ -1,7 +1,7 @@
-export default async function() {
-    return 'hello world'
+export default async function () {
+  return 'hello world'
 }
 
-export function post() {
-    return 'post'
+export function post(req) {
+  return 'post'
 }

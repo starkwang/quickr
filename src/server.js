@@ -150,6 +150,10 @@ class QuickrServer {
     return route
   }
 
+  getDefaultModdlewares() {
+    return [require('koa-bodyparser')()]
+  }
+
   async setRoute(route, entryFile) {
     require.cache = {}
     route = this.transformRoute(route)
@@ -167,6 +171,7 @@ class QuickrServer {
       }
       this.router[method](
         route,
+        ...this.getDefaultModdlewares(),
         this.customMiddleware(),
         ...this.globalMiddlewareHandlers,
         async (ctx) => {
