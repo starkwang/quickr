@@ -8,11 +8,17 @@ const { requireModule } = require('./utils')
 
 class QuickrServer {
   constructor(root, options = {}) {
-    const { apiRoot = 'api', middlewareRoot = 'middleware', loggerRoot = 'logger' } = options
+    const {
+      apiRoot = 'api',
+      middlewareRoot = 'middleware',
+      loggerRoot = 'logger',
+      errorHandlerRoot = 'error'
+    } = options
     this.root = root
     this.apiRoot = resolve(this.root, apiRoot)
     this.middlewareRoot = resolve(this.root, middlewareRoot)
     this.loggerRoot = resolve(this.root, loggerRoot)
+    this.errorHandlerRoot = resolve(this.root, errorHandlerRoot)
     this.app = new Koa()
     this.router = new Router()
   }
@@ -23,7 +29,20 @@ class QuickrServer {
     this.errorHandlers = await this.getErrorHandlers()
   }
 
-  async getErrorHandlers() {}
+  async getErrorHandlers() {
+    if (await fs.exists(this.errorHandlerRoot)) {
+      const defaultHandlerPath = resolve(this.errorHandlerRoot, 'index.js')
+      if (await fs.exists(defaultHandlerPath)) {
+        const defaultHandler = requireModule(defaultHandlerPath)
+        const unhandledRejectionHandler = require(defaultHandlerPath).unhandledRejection
+        return {
+          default: defaultHandler,
+          unhandledRejection: unhandledRejectionHandler
+        }
+      }
+    }
+    return {}
+  }
 
   async getLoggerHandlers() {
     if (await fs.exists(this.loggerRoot)) {
@@ -107,6 +126,9 @@ class QuickrServer {
         this.server = server
         resolve()
       })
+      if (this.errorHandlers.unhandledRejection) {
+        process.on('unhandledRejection', this.errorHandlers.unhandledRejection)
+      }
     })
   }
 
@@ -150,7 +172,7 @@ class QuickrServer {
     return route
   }
 
-  getDefaultModdlewares() {
+  getDefaultMiddlewares() {
     return [require('koa-bodyparser')()]
   }
 
@@ -171,7 +193,7 @@ class QuickrServer {
       }
       this.router[method](
         route,
-        ...this.getDefaultModdlewares(),
+        ...this.getDefaultMiddlewares(),
         this.customMiddleware(),
         ...this.globalMiddlewareHandlers,
         async (ctx) => {
@@ -179,9 +201,13 @@ class QuickrServer {
             const body = await handler.call(ctx, ctx.request, ctx.response)
             ctx.body = body
           } catch (e) {
-            // todo: 错误处理
-            console.log(e)
-            throw e
+            if (this.errorHandlers.default) {
+              ctx.response.status = 500
+              ctx.body = await this.errorHandlers.default.call(ctx, e)
+            } else {
+              ctx.response.status = 500
+              ctx.body = e.stack
+            }
           }
         }
       )
