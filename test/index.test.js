@@ -2,6 +2,8 @@ const Qucikr = require('../')
 const { resolve } = require('path')
 const got = require('got')
 const chai = require('chai')
+const fs = require('fs')
+const FormData = require('form-data')
 const expect = chai.expect
 
 describe('base', () => {
@@ -57,5 +59,13 @@ describe('base', () => {
   it('/foo/[id]', async () => {
     const response = await got('http://localhost:3000/foo/666')
     expect(response.body).to.equal('foo666')
+  })
+  it('/upload', async () => {
+    const form = new FormData()
+    form.append('my_file', fs.createReadStream(resolve(__dirname, 'node.png')))
+    const response = await got.post('http://localhost:3000/upload', {
+      body: form
+    })
+    expect(response.body).to.equal('["my_file"]')
   })
 })
