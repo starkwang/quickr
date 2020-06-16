@@ -4,6 +4,7 @@ const { resolve, join, relative } = require('path')
 const fs = require('fs-extra')
 const Logger = require('./logger')
 const shortid = require('shortid')
+const bodyParser = require('koa-bodyparser')
 const { requireModule } = require('./utils')
 
 class QuickrServer {
@@ -173,7 +174,7 @@ class QuickrServer {
   }
 
   getDefaultMiddlewares() {
-    return [require('koa-bodyparser')()]
+    return [bodyParser()]
   }
 
   async setRoute(route, entryFile) {
