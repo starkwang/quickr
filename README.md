@@ -12,7 +12,7 @@ A Node.js framework for future🚀
 
 ## Install 安装
 
-```js
+```bash
 $ npm i -g quickr
 ```
 
