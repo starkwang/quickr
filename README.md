@@ -31,8 +31,8 @@ $ touch api/index.js
 
 ```js
 // api/index.js
-export default function () {
-  return 'Hello World'
+export default function (req, res) {
+  res.send('Hello World')
 }
 ```
 
@@ -129,7 +129,7 @@ export default async function (req, res) {
 // api/index.js
 export default async function (req, res) {
   this.logger.log('loglog')
-  return 'hello world'
+  res.send('hello world')
 }
 ```
 
@@ -208,10 +208,10 @@ export default async function () {
 
 ```js
 // api/index.js
-export default async function () {
+export default async function (req, res) {
   const result = await doSomething('...')
   Promise.reject('oh!')
-  return result
+  res.send(result)
 }
 ```
 
