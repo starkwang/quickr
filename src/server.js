@@ -6,6 +6,7 @@ const Logger = require('./logger')
 const shortid = require('shortid')
 const koaBody = require('koa-body')
 const { requireModule } = require('./utils')
+const Context = require('./context/context')
 
 class QuickrServer {
   constructor(root, options = {}) {
@@ -83,10 +84,18 @@ class QuickrServer {
 
   customMiddleware() {
     return async (ctx, next) => {
-      ctx.request.params = ctx.params
-      ctx.requestId = shortid.generate()
-      ctx.logger = new Logger(this.loggerHandlers)
-      ctx.logger.setContext(ctx)
+      const { path, method, headers, query, body, files } = ctx.request
+      ctx.quickrContext = new Context({
+        requestId: shortid.generate(),
+        logger: new Logger(this.loggerHandlers),
+        path,
+        method,
+        headers,
+        query,
+        body,
+        files,
+        params: ctx.params
+      })
       await next()
     }
   }
@@ -182,7 +191,6 @@ class QuickrServer {
   }
 
   async setRoute(route, entryFile) {
-    require.cache = {}
     route = this.transformRoute(route)
     console.log(`Set route "${route}" => ${relative(this.root, entryFile)}`)
     const entry = require(entryFile)
@@ -202,18 +210,25 @@ class QuickrServer {
         this.customMiddleware(),
         ...this.globalMiddlewareHandlers,
         async (ctx) => {
+          const { quickrContext } = ctx
           try {
-            const body = await handler.call(ctx, ctx.request, ctx.response)
-            ctx.body = body
+            await handler.call(quickrContext, quickrContext.request, quickrContext.response)
           } catch (e) {
             if (this.errorHandlers.default) {
               ctx.response.status = 500
-              ctx.body = await this.errorHandlers.default.call(ctx, e)
+              await this.errorHandlers.default.call(quickrContext, e)
             } else {
               ctx.response.status = 500
               ctx.body = e.stack
+              return
             }
           }
+
+          ctx.response.status = quickrContext.response.status
+          for (const header in quickrContext.response.headers) {
+            ctx.response.set(header, quickrContext.response.headers[header])
+          }
+          ctx.body = ctx.quickrContext.response.body
         }
       )
     })

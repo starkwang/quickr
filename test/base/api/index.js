@@ -1,7 +1,7 @@
-export default async function () {
-  return 'hello world'
+export default async function (req, res) {
+  res.send('hello world')
 }
 
-export function post(req) {
-  return 'post'
+export function post(req, res) {
+  res.send('post')
 }

@@ -77,24 +77,24 @@ Quickr 使用了**基于文件系统的路由**，在 `api` 目录下的文件�
 ```js
 // 所有的 HTTP 方法，都会返回 "hello world"
 export default async function (req, res) {
-  return 'hello world'
+  res.send('hello world')
 }
 ```
 
 ```js
 // GET 方法，会返回 "This is a get method"
-export function get() {
-  return 'This is a get method'
+export function get(req, res) {
+  res.send('This is a get method')
 }
 
 // POST 方法，会返回 "This is a post method"
-export function post() {
-  return 'This is a post method'
+export function post(req, res) {
+  res.send('This is a post method')
 }
 
 // 除去 GET 和 POST 以外，都会返回 "hello world"
 export default async function (req, res) {
-  return 'hello world'
+  res.send('hello world')
 }
 ```
 
@@ -103,19 +103,19 @@ export default async function (req, res) {
 ```js
 // text/plain
 export default async function (req, res) {
-  return 'hello world'
+  res.send('hello world')
 }
 
 // text/html
 export default async function (req, res) {
-  return '<h1>hey!</h1>'
+  res.send('<h1>hey!</h1>')
 }
 
 // application/json
 export default async function (req, res) {
-  return {
+  res.send({
     foo: 'bar'
-  }
+  })
 }
 ```
 
@@ -231,8 +231,8 @@ export default async function () {
 
 ```js
 export default async function (err) {
-  this.response.status = 500
-  return `Request Error: ${err.message}`
+  this.response.status(500)
+  this.response.send(`Request Error: ${err.message}`)
 }
 ```
 
@@ -253,5 +253,15 @@ export function unhandledRejection(reason, promise) {
 施工中 👷
 
 ## API 参考
+
+### Context
+
+Context 对象表示一个请求的**上下文**
+
+### Request
+
+施工中 👷
+
+### Response
 
 施工中 👷

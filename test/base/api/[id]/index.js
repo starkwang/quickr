@@ -1,3 +1,3 @@
-export default function (req) {
-    return req.params.id
+export default function (req, res) {
+  res.send(req.params.id)
 }

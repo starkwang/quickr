@@ -1,3 +1,3 @@
-export function post(req) {
-  return req.body
+export function post(req, res) {
+  res.send(req.body)
 }
