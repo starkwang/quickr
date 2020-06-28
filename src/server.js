@@ -3,9 +3,8 @@ const Router = require('@koa/router')
 const { resolve, join, relative } = require('path')
 const fs = require('fs-extra')
 const Logger = require('./logger')
-const shortid = require('shortid')
 const koaBody = require('koa-body')
-const { requireModule } = require('./utils')
+const { requireModule, transformRoute } = require('./utils')
 const Context = require('./context/context')
 
 class QuickrServer {
@@ -27,8 +26,74 @@ class QuickrServer {
 
   async init() {
     this.loggerHandlers = await this.getLoggerHandlers()
-    this.globalMiddlewareHandlers = await this.getGlobalMiddlewareHandlers()
     this.errorHandlers = await this.getErrorHandlers()
+    this.routeHandlers = await this.getRouteHandlers()
+  }
+
+  async setRouter() {
+    const methods = ['get', 'post', 'put', 'delete', 'options']
+    for (const route of this.routeHandlers) {
+      console.log(`Set route "${route.path}" => ${route.file}`)
+      for (const method of methods) {
+        const handler = route.handler[method] || route.handler.default
+        if (!handler) {
+          continue
+        }
+        this.router[method](route.path, ...this.getDefaultMiddlewares(), async (ctx) => {
+          const { quickrContext } = ctx
+          try {
+            await handler.call(quickrContext, quickrContext.request, quickrContext.response)
+          } catch (e) {
+            if (this.errorHandlers.default) {
+              ctx.response.status = 500
+              await this.errorHandlers.default.call(quickrContext, e)
+            } else {
+              ctx.response.status = 500
+              ctx.body = e.stack
+              return
+            }
+          }
+          ctx.response.status = quickrContext.response.status
+          for (const header in quickrContext.response.headers) {
+            ctx.response.set(header, quickrContext.response.headers[header])
+          }
+          ctx.body = ctx.quickrContext.response.body
+        })
+      }
+    }
+  }
+
+  async getRouteHandlers() {
+    const handlers = []
+    const resolveHandlers = async (dirRoot, basePath = '/') => {
+      const files = await fs.readdir(dirRoot, { withFileTypes: true })
+      for (const file of files) {
+        const fileName = file.name
+        const isDirectory = file.isDirectory()
+        const routeName = fileName.split('.js')[0]
+        if (isDirectory) {
+          await resolveHandlers(join(dirRoot, fileName), join(basePath, routeName, '/'))
+        } else {
+          if (routeName === 'index') {
+            handlers.push({
+              path: transformRoute(basePath),
+              file: join(relative(this.root, dirRoot), fileName),
+              handler: require(join(dirRoot, fileName))
+            })
+          } else {
+            handlers.push({
+              path: transformRoute(join(basePath, routeName)),
+              file: join(relative(this.root, dirRoot), fileName),
+              handler: require(join(dirRoot, fileName))
+            })
+          }
+        }
+      }
+    }
+
+    await resolveHandlers(this.apiRoot)
+
+    return handlers
   }
 
   async getErrorHandlers() {
@@ -82,11 +147,10 @@ class QuickrServer {
     }
   }
 
-  customMiddleware() {
+  quickrContextMiddleware() {
     return async (ctx, next) => {
       const { path, method, headers, query, body, files } = ctx.request
       ctx.quickrContext = new Context({
-        requestId: shortid.generate(),
         logger: new Logger(this.loggerHandlers),
         path,
         method,
@@ -100,30 +164,8 @@ class QuickrServer {
     }
   }
 
-  async getGlobalMiddlewareHandlers() {
-    if (!(await fs.exists(this.middlewareRoot))) {
-      return []
-    }
-    const files = await fs.readdir(this.middlewareRoot, {
-      withFileTypes: true
-    })
-    const globalMiddlewares = []
-    for (const file of files) {
-      const fileName = file.name
-      const isDirectory = file.isDirectory()
-      if (!isDirectory) {
-        globalMiddlewares.push(fileName.split('.js')[0])
-      }
-    }
-    const globalMiddlewareHandlers = this.resolveMiddlewareHandlers(globalMiddlewares).map((f) => {
-      return (ctx, next) => {
-        f.call(ctx, ctx.request, ctx.response, next)
-      }
-    })
-    return globalMiddlewareHandlers
-  }
-
   async start(port = 3000) {
+    await this.setRouter()
     return new Promise((resolve, reject) => {
       const { app, router } = this
       app.use(router.routes()).use(router.allowedMethods())
@@ -154,94 +196,13 @@ class QuickrServer {
     })
   }
 
-  async setRoutes(dir, basePath = '/') {
-    const files = await fs.readdir(dir, { withFileTypes: true })
-    for (const file of files) {
-      const fileName = file.name
-      const isDirectory = file.isDirectory()
-      const routeName = fileName.split('.js')[0]
-      if (isDirectory) {
-        await this.setRoutes(join(dir, fileName), basePath + fileName + '/')
-      } else {
-        if (routeName === 'index') {
-          await this.setRoute(basePath, join(dir, fileName))
-        } else {
-          await this.setRoute(basePath + routeName, join(dir, fileName))
-        }
-      }
-    }
-  }
-
-  transformRoute(route) {
-    const result = route.match(/\[(.*?)\]/g)
-    if (result) {
-      for (const matched of result) {
-        route = route.replace(matched, ':' + matched.slice(1, matched.length - 1))
-      }
-    }
-    return route
-  }
-
   getDefaultMiddlewares() {
     return [
       koaBody({
         multipart: true
-      })
+      }),
+      this.quickrContextMiddleware()
     ]
-  }
-
-  async setRoute(route, entryFile) {
-    route = this.transformRoute(route)
-    console.log(`Set route "${route}" => ${relative(this.root, entryFile)}`)
-    const entry = require(entryFile)
-
-    const defaultHandler = entry.default || entry
-
-    const methods = ['get', 'post', 'put', 'delete', 'options']
-
-    methods.forEach((method) => {
-      const handler = entry[method] || defaultHandler
-      if (!handler) {
-        return
-      }
-      this.router[method](
-        route,
-        ...this.getDefaultMiddlewares(),
-        this.customMiddleware(),
-        ...this.globalMiddlewareHandlers,
-        async (ctx) => {
-          const { quickrContext } = ctx
-          try {
-            await handler.call(quickrContext, quickrContext.request, quickrContext.response)
-          } catch (e) {
-            if (this.errorHandlers.default) {
-              ctx.response.status = 500
-              await this.errorHandlers.default.call(quickrContext, e)
-            } else {
-              ctx.response.status = 500
-              ctx.body = e.stack
-              return
-            }
-          }
-
-          ctx.response.status = quickrContext.response.status
-          for (const header in quickrContext.response.headers) {
-            ctx.response.set(header, quickrContext.response.headers[header])
-          }
-          ctx.body = ctx.quickrContext.response.body
-        }
-      )
-    })
-  }
-
-  resolveMiddlewareHandlers(middlewares = []) {
-    const handlers = []
-    for (const middleware of middlewares) {
-      const entry = require(resolve(this.middlewareRoot, middleware))
-      const handler = entry.default || entry
-      handlers.push(handler)
-    }
-    return handlers
   }
 }
 module.exports = QuickrServer

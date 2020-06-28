@@ -1,9 +1,9 @@
 const QuickrRequest = require('./request')
 const QuickrResponse = require('./response')
+const shortid = require('shortid')
 
 module.exports = class Context {
   constructor({
-    requestId,
     logger,
     path,
     method,
@@ -15,7 +15,7 @@ module.exports = class Context {
     // request,
     // response
   }) {
-    this.requestId = requestId
+    this.requestId = shortid.generate()
     this.logger = logger
     this.path = path
     this.method = method

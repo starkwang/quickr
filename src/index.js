@@ -15,7 +15,6 @@ class Quickr {
   async startServer() {
     this.server = new QuickrServer(this.root, {})
     await this.server.init()
-    await this.server.setRoutes(this.apiRoot)
     await this.server.start(3000)
   }
 
@@ -26,3 +25,5 @@ class Quickr {
 }
 
 module.exports = Quickr
+
+module.exports.QuickrContext = require('./context/context')
