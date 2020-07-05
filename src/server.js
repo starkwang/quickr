@@ -6,6 +6,7 @@ const Logger = require('./logger')
 const koaBody = require('koa-body')
 const { requireModule, transformRoute } = require('./utils')
 const Context = require('./context/context')
+const pathToRegExp = require('path-to-regexp')
 
 class QuickrServer {
   constructor(root, options = {}) {
@@ -75,16 +76,20 @@ class QuickrServer {
           await resolveHandlers(join(dirRoot, fileName), join(basePath, routeName, '/'))
         } else {
           if (routeName === 'index') {
+            const path = transformRoute(basePath)
             handlers.push({
-              path: transformRoute(basePath),
+              path,
               file: join(relative(this.root, dirRoot), fileName),
-              handler: require(join(dirRoot, fileName))
+              handler: require(join(dirRoot, fileName)),
+              match: pathToRegExp.match(path, { encode: encodeURI, decode: decodeURIComponent })
             })
           } else {
+            const path = transformRoute(join(basePath, routeName))
             handlers.push({
-              path: transformRoute(join(basePath, routeName)),
+              path,
               file: join(relative(this.root, dirRoot), fileName),
-              handler: require(join(dirRoot, fileName))
+              handler: require(join(dirRoot, fileName)),
+              match: pathToRegExp.match(path, { encode: encodeURI, decode: decodeURIComponent })
             })
           }
         }
@@ -203,6 +208,57 @@ class QuickrServer {
       }),
       this.quickrContextMiddleware()
     ]
+  }
+
+  async getServerlessEntry() {
+    return async (event) => {
+      const { path, httpMethod, headers, queryStringParameters, body, isBase64Encoded } = event
+
+      let matchedRoute
+      for (const route of this.routeHandlers) {
+        console.log(route)
+        const result = route.match(path)
+        if (result) {
+          matchedRoute = {
+            ...route,
+            matchResult: result
+          }
+          break
+        }
+      }
+      if (!matchedRoute) {
+        throw new Error('route not found')
+      }
+      console.log(matchedRoute)
+
+      const quickrContextParams = {
+        logger: new Logger(this.loggerHandlers),
+        path,
+        method: httpMethod,
+        headers,
+        query: queryStringParameters,
+        params: matchedRoute.matchResult.params
+      }
+
+      // todo: context.files
+      if (isBase64Encoded) {
+        quickrContextParams.body = Buffer.from(body, 'base64')
+      } else {
+        quickrContextParams.body = body
+      }
+
+      const quickrContext = new Context(quickrContextParams)
+
+      const handler = matchedRoute.handler[httpMethod.toLowerCase()] || matchedRoute.handler.default
+      await handler.call(quickrContext, quickrContext.request, quickrContext.response)
+
+      return {
+        isBase64Encoded: true | false,
+        statusCode: quickrContext.response.status,
+        headers: quickrContext.response.headers,
+        body: quickrContext.response.body
+      }
+    }
   }
 }
 module.exports = QuickrServer

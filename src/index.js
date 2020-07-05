@@ -9,11 +9,14 @@ class Quickr {
     this.root = root
     this.apiRoot = resolve(this.root, apiRoot)
     this.middlewareRoot = resolve(this.root, middlewareRoot)
-    this.server = null
+    this.server = new QuickrServer(this.root, {})
+  }
+
+  async initServer() {
+    await this.server.init()
   }
 
   async startServer() {
-    this.server = new QuickrServer(this.root, {})
     await this.server.init()
     await this.server.start(3000)
   }
