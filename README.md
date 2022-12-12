@@ -32,7 +32,7 @@ $ touch api/index.js
 ```js
 // api/index.js
 export default function (req, res) {
-  res.send('Hello World')
+  return 'Hello World'
 }
 ```
 
@@ -77,19 +77,19 @@ Quickr 使用了**基于文件系统的路由**，在 `api` 目录下的文件�
 ```js
 // 所有的 HTTP 方法，都会返回 "hello world"
 export default async function (req, res) {
-  res.send('hello world')
+  return 'hello world'
 }
 ```
 
 ```js
 // GET 方法，会返回 "This is a get method"
 export function get(req, res) {
-  res.send('This is a get method')
+  return 'This is a get method'
 }
 
 // POST 方法，会返回 "This is a post method"
 export function post(req, res) {
-  res.send('This is a post method')
+  return 'This is a post method'
 }
 
 // 除去 GET 和 POST 以外，都会返回 "hello world"
@@ -103,19 +103,19 @@ export default async function (req, res) {
 ```js
 // text/plain
 export default async function (req, res) {
-  res.send('hello world')
+  return 'hello world'
 }
 
 // text/html
 export default async function (req, res) {
-  res.send('<h1>hey!</h1>')
+  return '<h1>hey!</h1>'
 }
 
 // application/json
 export default async function (req, res) {
-  res.send({
+  return {
     foo: 'bar'
-  })
+  }
 }
 ```
 
@@ -129,7 +129,7 @@ export default async function (req, res) {
 // api/index.js
 export default async function (req, res) {
   this.logger.log('loglog')
-  res.send('hello world')
+  return 'hello world'
 }
 ```
 
@@ -211,7 +211,7 @@ export default async function () {
 export default async function (req, res) {
   const result = await doSomething('...')
   Promise.reject('oh!')
-  res.send(result)
+  return result
 }
 ```
 
